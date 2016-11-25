@@ -1,7 +1,7 @@
 ####################################################
 ####################################################
 ###                                              ###
-###   Fastfile v0.1.7 by iForests (2016/11/25)   ###
+###   Fastfile v0.1.8 by iForests (2016/11/26)   ###
 ###                                              ###
 ####################################################
 ####################################################
@@ -115,6 +115,7 @@ platform :android do
     # ENV["SLACK_URL"] = "https://hooks.slack.com/services/..."
   end
 
+
   lane :resetapk do
     reset_git_repo(
         force: true,
@@ -122,17 +123,8 @@ platform :android do
     )
   end
 
+
   lane :install do
-    should_build = true
-    if File.file?(get_release_apk_path)
-      should_build = prompt(text: 'app-release.apk exists. Do you still want to build the project?', boolean: true)
-    end
-
-    if should_build
-      ensure_git_status_clean
-      gradle(task: "assembleRelease")
-    end
-
     adb(command: "install -r " + get_release_apk_path)
   end
 
@@ -140,65 +132,47 @@ platform :android do
     adb(command: "uninstall #{CredentialsManager::AppfileConfig.try_fetch_value(:package_name)}")
   end
 
-  lane :prod do
+
+  lane :build do
     ensure_git_status_clean
 
     default_version_name = get_version_name
     version_name = prompt(text: "Set versionName to (now the value is #{default_version_name}, last git tag is #{last_git_tag}): ")
 
-    should_build = true
-    if version_name == default_version_name && File.file?(get_release_apk_path)
-      should_build = prompt(text: "versionName doesn't change. Do you want to build the project?", boolean: true)
-    else
-      set_version_name(version_name)
-      set_version_code(version_name2code(version_name))
-    end
+    set_version_name(version_name)
+    set_version_code(version_name2code(version_name))
 
-    if should_build
-      gradle(task: "assembleRelease")
-    end
-
-    Actions.sh("git add -f #{get_release_apk_path}")
-    git_add(path: get_gradle_path)
-    git_commit(path: [get_gradle_path, get_release_apk_path],
-        message: 'Release version: v' + version_name)
-
-    add_git_tag(tag: 'v' + version_name)
-    
-    supply(
-        apk_paths: [get_release_apk_path],
-        skip_upload_metadata: true,
-        skip_upload_images: true,
-        skip_upload_screenshots: true
-    )
-
-    new_version = bump_version_name('patch')
-
-    git_commit(path: get_gradle_path,
-        message: 'Prepare next development version: v' + new_version)
-  end
-
-  desc "Runs all the tests"
-  lane :test do
-    gradle(task: "test")
-  end
-
-  desc "Submit a new Beta Build to Crashlytics Beta"
-  lane :beta do
     gradle(task: "assembleRelease")
-    # crashlytics
 
-    # sh "your_script.sh"
-    # You can also use other beta testing services here
+    install
   end
 
-  desc "Deploy a new version to the Google Play"
+
   lane :deploy do
-    gradle(task: "assembleRelease")
-    supply
+    version_name = get_version_name
+
+    if prompt(text: "Are you sure you want to release v#{version_name}?", boolean: true)
+      Actions.sh("git add -f #{get_release_apk_path}")
+      git_add(path: get_gradle_path)
+      git_commit(path: [get_gradle_path, get_release_apk_path],
+          message: 'Release version: v' + version_name)
+
+      add_git_tag(tag: 'v' + version_name)
+    
+      supply(
+          apk_paths: [get_release_apk_path],
+          skip_upload_metadata: true,
+          skip_upload_images: true,
+          skip_upload_screenshots: true
+      )
+
+      new_version = bump_version_name('patch')
+
+      git_commit(path: get_gradle_path,
+          message: 'Prepare next development version: v' + new_version)
+    end
   end
 
-  # You can define as many lanes as you want
 
   after_all do |lane|
     # This block is called, only if the executed lane was successful
