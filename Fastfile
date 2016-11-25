@@ -1,7 +1,7 @@
 ####################################################
 ####################################################
 ###                                              ###
-###   Fastfile v0.1.5 by iForests (2016/11/25)   ###
+###   Fastfile v0.1.6 by iForests (2016/11/25)   ###
 ###                                              ###
 ####################################################
 ####################################################
@@ -144,7 +144,7 @@ platform :android do
     ensure_git_status_clean
 
     default_version_name = get_version_name
-    version_name = prompt(text: "Set versionName to (now the value is #{default_version_name}): ")
+    version_name = prompt(text: "Set versionName to (now the value is #{default_version_name}, last git tag is #{last_git_tag}): ")
 
     should_build = true
     if version_name == default_version_name && File.file?(get_release_apk_path)
