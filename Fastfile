@@ -1,7 +1,7 @@
 ####################################################
 ####################################################
 ###                                              ###
-###   Fastfile v0.1.6 by iForests (2016/11/25)   ###
+###   Fastfile v0.1.7 by iForests (2016/11/25)   ###
 ###                                              ###
 ####################################################
 ####################################################
@@ -166,7 +166,7 @@ platform :android do
     add_git_tag(tag: 'v' + version_name)
     
     supply(
-        apk: get_release_apk_path,
+        apk_paths: [get_release_apk_path],
         skip_upload_metadata: true,
         skip_upload_images: true,
         skip_upload_screenshots: true
