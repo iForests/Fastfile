@@ -1,7 +1,7 @@
 ####################################################
 ####################################################
 ###                                              ###
-###   Fastfile v0.1.8 by iForests (2016/11/26)   ###
+###   Fastfile v0.1.9 by iForests (2016/11/26)   ###
 ###                                              ###
 ####################################################
 ####################################################
@@ -37,7 +37,7 @@ def version_name2code(name = nil)
   major, minor, patch = name.split('.').map(&:to_i)
   patch = 0 if patch.nil?
 
-  major * 1000 + minor * 1 + patch * 0
+  major * 1000000 + minor * 1000 + patch * 1
 end
 
 def set_version_code(v = nil)
@@ -125,13 +125,26 @@ platform :android do
 
 
   lane :install do
-    adb(command: "install -r " + get_release_apk_path)
+    r = adb(command: "install -r " + get_release_apk_path)
+    if r.include? "Failure"
+      reason = r[/Failure \[(\w+)\]/, 1]
+      if prompt(text: "Install failed (#{reason}). Do you want to uninstall and try again?", boolean: true)
+        uninstall
+        install
+      else
+        UI.user_error!(r)
+      end
+    end
   end
 
   lane :uninstall do
     adb(command: "uninstall #{CredentialsManager::AppfileConfig.try_fetch_value(:package_name)}")
   end
 
+
+  lane :clean do
+    gradle(task: "clean")
+  end
 
   lane :build do
     ensure_git_status_clean
@@ -142,6 +155,7 @@ platform :android do
     set_version_name(version_name)
     set_version_code(version_name2code(version_name))
 
+    clean
     gradle(task: "assembleRelease")
 
     install
@@ -151,7 +165,7 @@ platform :android do
   lane :deploy do
     version_name = get_version_name
 
-    if prompt(text: "Are you sure you want to release v#{version_name}?", boolean: true)
+    if prompt(text: "Are you sure you want to deploy v#{version_name}?", boolean: true)
       Actions.sh("git add -f #{get_release_apk_path}")
       git_add(path: get_gradle_path)
       git_commit(path: [get_gradle_path, get_release_apk_path],
