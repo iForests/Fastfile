@@ -1,10 +1,10 @@
-####################################################
-####################################################
-###                                              ###
-###   Fastfile v0.1.9 by iForests (2016/11/26)   ###
-###                                              ###
-####################################################
-####################################################
+#####################################################
+#####################################################
+###                                               ###
+###   Fastfile v0.1.10 by iForests (2016/11/27)   ###
+###                                               ###
+#####################################################
+#####################################################
 
 # Customise this file, documentation can be found here:
 # https://github.com/fastlane/fastlane/tree/master/fastlane/docs
@@ -37,7 +37,7 @@ def version_name2code(name = nil)
   major, minor, patch = name.split('.').map(&:to_i)
   patch = 0 if patch.nil?
 
-  major * 1000000 + minor * 1000 + patch * 1
+  major * 1000 + minor * 1 + patch * 0
 end
 
 def set_version_code(v = nil)
@@ -162,7 +162,7 @@ platform :android do
   end
 
 
-  lane :deploy do
+  lane :deploy do |options|
     version_name = get_version_name
 
     if prompt(text: "Are you sure you want to deploy v#{version_name}?", boolean: true)
@@ -173,12 +173,14 @@ platform :android do
 
       add_git_tag(tag: 'v' + version_name)
     
-      supply(
-          apk_paths: [get_release_apk_path],
-          skip_upload_metadata: true,
-          skip_upload_images: true,
-          skip_upload_screenshots: true
-      )
+      if options[:submit] != false
+        supply(
+            apk_paths: [get_release_apk_path],
+            skip_upload_metadata: true,
+            skip_upload_images: true,
+            skip_upload_screenshots: true
+        )
+      end
 
       new_version = bump_version_name('patch')
 
