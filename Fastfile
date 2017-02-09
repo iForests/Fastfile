@@ -1,7 +1,7 @@
 #####################################################
 #####################################################
 ###                                               ###
-###   Fastfile v0.1.10 by iForests (2016/11/27)   ###
+###   Fastfile v0.1.11 by iForests (2017/02/09)   ###
 ###                                               ###
 #####################################################
 #####################################################
@@ -19,7 +19,7 @@
 
 # This is the minimum version number required.
 # Update this, if you use features of a newer version
-fastlane_version "1.110.0"
+fastlane_version "2.14.2"
 
 default_platform :android
 
@@ -186,6 +186,7 @@ platform :android do
 
       git_commit(path: get_gradle_path,
           message: 'Prepare next development version: v' + new_version)
+      push_to_git_remote(local_branch: 'master')
     end
   end
 
